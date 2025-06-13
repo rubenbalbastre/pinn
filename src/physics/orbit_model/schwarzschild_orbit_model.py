@@ -1,61 +1,58 @@
-import numpy as np
 import torch
 
 def RelativisticOrbitModel_Schwarzschild_EMR(t, u, model_params):
     """
-    Motion of a point-like particle in Schwarzschild background.
+    Schwarzschild EMR orbit ODE using PyTorch.
 
-    Parameters:
-    - u: [chi, phi]
-    - model_params: [p, M, e, a] (a is unused)
-    - t: time (unused)
+    Args:
+        t: time (unused)
+        u: tensor([chi, phi])
+        model_params: tensor([p, M, e, a]) (a unused here)
 
     Returns:
-    - [dchi/dt, dphi/dt]
+        tensor([chi_dot, phi_dot])
     """
     chi, phi = u
     p, M, e, a = model_params
 
-    numer = (p - 2 - 2 * e * np.cos(chi)) * (1 + e * np.cos(chi))**2
-    denom = np.sqrt((p - 2)**2 - 4 * e**2)
+    numer = (p - 2 - 2 * e * torch.cos(chi)) * (1 + e * torch.cos(chi))**2
+    denom = torch.sqrt((p - 2)**2 - 4 * e**2)
 
-    phi_dot = numer / (M * p**(3/2) * denom)
-    chi_dot = numer * np.sqrt(p - 6 - 2 * e * np.cos(chi)) / (M * p**2 * denom)
+    phi_dot = numer / (M * p**(1.5) * denom)
+    chi_dot = numer * torch.sqrt(p - 6 - 2 * e * torch.cos(chi)) / (M * p**2 * denom)
 
-    return [chi_dot, phi_dot]
+    return torch.stack([chi_dot, phi_dot])
 
 
-def NNOrbitModel_Schwarzschild_EMR(t, u, model_params, NN=None, NN_params=None):
+def NNOrbitModel_Schwarzschild_EMR(t, u, model_params, NN=None):
     """
-    Schwarzschild EMR orbit model with neural network perturbation.
+    Schwarzschild EMR orbit model with NN correction in PyTorch.
 
-    Parameters:
-    - u: [chi, phi]
-    - model_params: [p, M, e, a]
-    - t: time (unused)
-    - NN: neural network model
-    - NN_params: parameters for the neural network
+    Args:
+        t: time (unused)
+        u: tensor([chi, phi])
+        model_params: tensor([p, M, e, a])
+        NN: neural network model
 
     Returns:
-    - [dchi/dt, dphi/dt] with NN correction
+        tensor([chi_dot, phi_dot]) with NN correction
     """
     chi, phi = u
     p, M, e, a = model_params
 
-    nn_input = np.array([chi, phi, a, p, M, e], dtype=np.float32)
+    nn_input = torch.stack([chi, phi, a, p, M, e])
 
     if NN is None:
-        nn = np.array([1.0, 1.0])
+        nn = torch.ones(2, dtype=u.dtype, device=u.device)
     else:
-        input_tensor = torch.tensor(nn_input, dtype=torch.float32)
         with torch.no_grad():
-            nn_output = NN(input_tensor, NN_params).numpy()
-        nn = 1.0 + nn_output
+            nn_output = NN(nn_input)
+        nn = 1.0 + nn_output  # correction factors
 
-    numer = (p - 2 - 2 * e * np.cos(chi)) * (1 + e * np.cos(chi))**2
-    denom = np.sqrt((p - 2)**2 - 4 * e**2)
+    numer = (p - 2 - 2 * e * torch.cos(chi)) * (1 + e * torch.cos(chi))**2
+    denom = torch.sqrt((p - 2)**2 - 4 * e**2)
 
-    phi_dot = (numer / (M * p**(3/2) * denom)) * nn[0]
-    chi_dot = (numer * np.sqrt(p - 6 - 2 * e * np.cos(chi)) / (M * p**2 * denom)) * nn[1]
+    phi_dot = (numer / (M * p**(1.5) * denom)) * nn[0]
+    chi_dot = (numer * torch.sqrt(p - 6 - 2 * e * torch.cos(chi)) / (M * p**2 * denom)) * nn[1]
 
-    return [chi_dot, phi_dot]
+    return torch.stack([chi_dot, phi_dot])

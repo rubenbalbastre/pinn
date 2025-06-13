@@ -24,7 +24,7 @@ def NewtonianOrbitModel_EMR(t, u, model_params):
     return torch.stack([χ_dot, ϕ_dot])
 
 
-def NNOrbitModel_Newton_EMR(t, u, model_params, NN=None, NN_params=None):
+def NNOrbitModel_Newton_EMR(t, u, model_params):
     """
     Neural Newtonian ODE model with learned corrections.
 
