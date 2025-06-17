@@ -1,6 +1,7 @@
 import torch
 
-def RelativisticOrbitModel_Schwarzschild_EMR(t, u, model_params):
+
+def RelativisticOrbitModel_Schwarzschild_EMR(u):
     """
     Schwarzschild EMR orbit ODE using PyTorch.
 
@@ -12,8 +13,7 @@ def RelativisticOrbitModel_Schwarzschild_EMR(t, u, model_params):
     Returns:
         tensor([chi_dot, phi_dot])
     """
-    chi, phi = u
-    p, M, e, a = model_params
+    chi, phi, p, e, M, a  = u
 
     numer = (p - 2 - 2 * e * torch.cos(chi)) * (1 + e * torch.cos(chi))**2
     denom = torch.sqrt((p - 2)**2 - 4 * e**2)
@@ -24,30 +24,21 @@ def RelativisticOrbitModel_Schwarzschild_EMR(t, u, model_params):
     return torch.stack([chi_dot, phi_dot])
 
 
-def NNOrbitModel_Schwarzschild_EMR(t, u, model_params, NN=None):
+def NNOrbitModel_Schwarzschild_EMR(model, u):
     """
     Schwarzschild EMR orbit model with NN correction in PyTorch.
 
     Args:
-        t: time (unused)
-        u: tensor([chi, phi])
-        model_params: tensor([p, M, e, a])
-        NN: neural network model
+        model: neural network model
 
     Returns:
         tensor([chi_dot, phi_dot]) with NN correction
     """
-    chi, phi = u
-    p, M, e, a = model_params
 
-    nn_input = torch.stack([chi, phi, a, p, M, e])
+    chi, phi, p, e, M, a  = u
 
-    if NN is None:
-        nn = torch.ones(2, dtype=u.dtype, device=u.device)
-    else:
-        with torch.no_grad():
-            nn_output = NN(nn_input)
-        nn = 1.0 + nn_output  # correction factors
+    nn_output = model(u)
+    nn = 1.0 + nn_output
 
     numer = (p - 2 - 2 * e * torch.cos(chi)) * (1 + e * torch.cos(chi))**2
     denom = torch.sqrt((p - 2)**2 - 4 * e**2)

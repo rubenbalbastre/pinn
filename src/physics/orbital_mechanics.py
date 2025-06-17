@@ -1,29 +1,17 @@
 import torch
 
-def soln2orbit(soln, M, model_params=None):
+def soln2orbit(chi, phi, p, M, e, a):
     """
     Performs change of variables:
     (χ(t), ϕ(t)) ↦ (x(t), y(t))
     """
-    size_soln = soln.shape[0]
 
-    if size_soln == 2:  # EMR case
-        p, M_, e, a = model_params
-        χ = soln[0, :]
-        ϕ = soln[1, :]
-    elif size_soln == 4:  # non-EMR case
-        χ = soln[0, :]
-        ϕ = soln[1, :]
-        p = soln[2, :]
-        e = soln[3, :]
-    else:
-        raise ValueError("soln.shape[0] must be either 2 or 4")
-
-    r = p * M / (1 + e * torch.cos(χ))
-    x = r * torch.cos(ϕ)
-    y = r * torch.sin(ϕ)
+    r = p * M / (1 + e * torch.cos(chi))
+    x = r * torch.cos(phi)
+    y = r * torch.sin(phi)
 
     orbit = torch.vstack((x, y))
+
     return orbit
 
 
@@ -93,10 +81,14 @@ def h_22_quadrupole(dt, orbit, mass=1.0):
 
 
 def h_22_strain_one_body(dt, orbit):
+
     h11, h12, h22 = h_22_quadrupole(dt, orbit)
+
     h_plus = h11 - h22
     h_cross = 2.0 * h12
+
     scaling_const = torch.sqrt(torch.tensor(torch.pi / 5))
+    
     return scaling_const * h_plus, -scaling_const * h_cross
 
 
@@ -135,16 +127,18 @@ def one2two(path, m1, m2):
     return r1, r2
 
 
-def compute_waveform(dt, soln, mass_ratio, total_mass, model_params):
+def compute_waveform(dt, u, model_params, mass_ratio: float = 0.0):
     """
     Calculate Waveform from solution
     """
-    assert mass_ratio >= 0.0, "mass_ratio must be non-negative"
+    chi, phi = u
+    p, e, M, a = model_params
 
-    orbit = soln2orbit(soln, total_mass, model_params)
+    orbit = soln2orbit(chi, phi, p, M, e, a)
+
     if mass_ratio > 0:
-        mass1 = total_mass * mass_ratio / (1.0 + mass_ratio)
-        mass2 = total_mass / (1.0 + mass_ratio)
+        mass1 = M * mass_ratio / (1.0 + mass_ratio)
+        mass2 = M / (1.0 + mass_ratio)
         orbit1, orbit2 = one2two(orbit, mass1, mass2)
         waveform = h_22_strain_two_body(dt, orbit1, mass1, orbit2, mass2)
     else:
