@@ -22,7 +22,7 @@ def plot_sample(sample, u_xt_pred):
     ax[1].set_ylabel("Time")
 
     im2 = ax[2].imshow(np.abs(u_xt - u_xt_pred), aspect="auto", origin="lower", extent=[0, 1, 0, 0.1])
-    fig.colorbar(im1, ax=ax[2], label="Temperature Absolute error")
+    fig.colorbar(im2, ax=ax[2], label="Temperature Absolute error")
     ax[2].set_xlabel("x")
     ax[2].set_ylabel("Time")
 
