@@ -26,6 +26,6 @@ def plot_sample(sample, u_xt_pred):
     ax[2].set_xlabel("x")
     ax[2].set_ylabel("Time")
 
-    fig.suptitle(f"Heat diffusion (alpha: {sample['kind']})")
+    fig.suptitle(f"{sample["data_type"].capitalize()} (physical coefficient: {sample['kind']})")
 
     plt.show()

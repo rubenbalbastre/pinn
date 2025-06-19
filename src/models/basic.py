@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 
@@ -11,7 +10,8 @@ class alpha_network(nn.Module):
             nn.Tanh(),
             nn.Linear(in_features=12, out_features=12),
             nn.Tanh(),
-            nn.Linear(in_features=12,out_features=1)
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
         )
 
     def forward(self, x):
@@ -27,11 +27,9 @@ class u_network(nn.Module):
             nn.Tanh(),
             nn.Linear(in_features=12, out_features=12),
             nn.Tanh(),
-            nn.Linear(in_features=12,out_features=1)
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
         )
 
     def forward(self, xt):
         return self.net(xt)
-
-
-

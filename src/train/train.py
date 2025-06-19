@@ -1,6 +1,4 @@
-import torch
 
-from src.loss_function.loss_function import Loss
 
 
 def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
@@ -17,16 +15,17 @@ def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
 
         u_pred = u_net(xt).reshape(data_batch["nx"], data_batch["nt"])
 
-        alpha_pred = alpha_net(x=x)
+        phys_coeff_pred = alpha_net(x=x)
 
         optimizer.zero_grad()
 
         loss = loss_function(
+            data_type=data_batch["data_type"],
             x=x, 
             xt=xt,
             u_pred=u_pred,
             u_obs=u_xt,
-            alpha_pred=alpha_pred.requires_grad_(True),
+            phys_coeff_pred=phys_coeff_pred.requires_grad_(True),
             nt=data_batch["nt"]
         )
 
@@ -41,10 +40,7 @@ def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
     return epoch_loss
 
 
-def train(dataset, u_net, alpha_net, epochs=1000, lr=5e-3):
-
-    optimizer = torch.optim.Adam(list(u_net.parameters()) + list(alpha_net.parameters()), lr=lr)
-    loss_function = Loss()
+def train(dataset, u_net, alpha_net, loss_function, optimizer, epochs=1000):
 
     losses = []
     
