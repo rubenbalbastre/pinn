@@ -1,28 +1,37 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
-# Helper function: to create a lambda layer
-class LambdaLayer(nn.Module):
-    def __init__(self, func):
-        super().__init__()
-        self.func = func
-    def forward(self, x):
-        return self.func(x)
-    
-
-class BasicNN(nn.Module):
+class alpha_network(nn.Module):
 
     def __init__(self):
-        super().__init__()
-        self.model = nn.Sequential(
-            LambdaLayer(lambda x: torch.stack([x[:,0], x[:,1], x[:,2], x[:,3], x[:,4], x[:,2]**2, x[:,2]**3], dim=1).float()),
-            nn.Linear(5, 10),
+        super(alpha_network, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_features=1, out_features=12),
             nn.Tanh(),
-            nn.Linear(10, 2)
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1)
         )
 
     def forward(self, x):
-        return self.model(x)
+        return self.net(x)
+    
+
+class u_network(nn.Module):
+
+    def __init__(self):
+        super(u_network, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_features=2, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1)
+        )
+
+    def forward(self, xt):
+        return self.net(xt)
+
+
 
