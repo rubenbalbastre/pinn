@@ -4,6 +4,7 @@ import random
 from torch.utils.data import Dataset
 
 from src.data_generator.mesh_grid import generate_mesh_grid
+from src.data_generator.utils import encode_u_type
 
 
 def solve_wave_equation(c_x, x, t, dt, dx, u0, v0):
@@ -70,7 +71,8 @@ class WaveEquationDataset(Dataset):
             u_xt = solve_wave_equation(c_x, x, t, dt, dx, u0, v0)
 
             item_information = mesh | {
-                "data_type": "wave",
+                "u_type": encode_u_type("wave"),
+                "u_type_txt": "wave",
                 "kind": kind,
                 "alpha": c_x,     # shape: (nx,)
                 "u_xt": u_xt,         # shape: (nt+1, nx)

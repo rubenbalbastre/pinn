@@ -10,7 +10,6 @@ def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
         # predict u(x,t), alpha(x)
         x = data_batch["x"].requires_grad_(True)
         xt = data_batch["xt"].requires_grad_(True)
-        t = data_batch["t"].requires_grad_(True)
         u_xt = data_batch["u_xt"].requires_grad_(True)
 
         u_pred = u_net(xt).reshape(data_batch["nx"], data_batch["nt"])
@@ -20,12 +19,13 @@ def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
         optimizer.zero_grad()
 
         loss = loss_function(
-            data_type=data_batch["data_type"],
+            u_type=data_batch["u_type_txt"],
             x=x, 
             xt=xt,
             u_pred=u_pred,
             u_obs=u_xt,
-            phys_coeff_pred=phys_coeff_pred.requires_grad_(True),
+            phys_coeff=data_batch["alpha"],
+            phys_coeff_pred=phys_coeff_pred,
             nt=data_batch["nt"]
         )
 

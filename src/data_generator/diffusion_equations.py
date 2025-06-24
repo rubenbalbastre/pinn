@@ -4,6 +4,7 @@ import random
 from torch.utils.data import Dataset
 
 from src.data_generator.mesh_grid import generate_mesh_grid
+from src.data_generator.utils import encode_u_type
 
 
 def solve_diffusion_equation(kappa_x, x, t, dt, dx, u0):
@@ -68,7 +69,8 @@ class DiffusionEquationDataset(Dataset):
                 u0=u0
             )
             item_information = mesh | {
-                "data_type": "diffusion",
+                "u_type": encode_u_type("diffusion"),
+                "u_type_txt": "diffusion",
                 "kind": kind,
                 "alpha": kappa_x,     # shape: (nx,)
                 "u_xt": u_xt,         # shape: (nt+1, nx)

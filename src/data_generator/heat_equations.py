@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import numpy as np
 
 from src.data_generator.mesh_grid import generate_mesh_grid
+from src.data_generator.utils import encode_u_type
 
 
 def solve_heat_equation(alpha_x, x, t, dt, dx, u0, nx):
@@ -65,7 +66,8 @@ class HeatEquationDataset(Dataset):
             )
 
             item_information = mesh | {
-                "data_type": "heat",
+                "u_type": encode_u_type("heat"),
+                "u_type_txt": "heat",
                 "kind": alpha_kind,
                 "alpha": alpha_x,     # shape: (nx,)
                 "u_xt": u_xt,         # shape: (nt+1, nx)

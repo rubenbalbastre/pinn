@@ -1,55 +1,61 @@
-import torch
 import torch.nn as nn
+import torch
+
 
 class Encoder(nn.Module):
     """
-    Encodes (x, y, z, t, u, u_type) into a latent material representation z_mat.
-    u_type is expected to be a one-hot or learned embedding.
+    Encodes (x, t, u, u_type) into a latent material representation z_mat
     """
-    def __init__(self, input_dim=6, latent_dim=32):
+    def __init__(self, input_dim=5, latent_dim=32, num_heads=1):
         super().__init__()
+
         self.net = nn.Sequential(
             nn.Linear(input_dim, 64),
             nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
             nn.Linear(64, latent_dim)
         )
+        self.attn = nn.MultiheadAttention(embed_dim=latent_dim, num_heads=num_heads, batch_first=True)
+        self.query = nn.Parameter(torch.randn(1, 1, latent_dim))  # shape: [B, 1, latent_dim]
 
     def forward(self, xytu_type):
-        return self.net(xytu_type)  # [N, latent_dim]
+        z_points = self.net(xytu_type).unsqueeze(0)  # [1, N, latent_dim] (batch-first)
+        Q = self.query # [1, 1, latent_dim]
+        z_global, attn_weights = self.attn(Q, z_points, z_points)  # output: [1, 1, latent_dim]
+        return z_global.squeeze(0)       # [1, latent_dim], [1, N]
 
 
 class SharedDecoder(nn.Module):
     """
     Decodes z_mat and spatial coords into a hidden representation shared across all property heads.
     """
-    def __init__(self, latent_dim=32):
+    def __init__(self, latent_dim=32, output_dim=16):
         super().__init__()
         self.shared_net = nn.Sequential(
-            nn.Linear(latent_dim + 3, 64),  # x, y, z + z_mat
+            nn.Linear(latent_dim + 2, 64),  # x + z_mat
             nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64)
+            nn.Linear(64, output_dim)
         )
 
-    def forward(self, z_mat, xyz):
-        z_repeated = z_mat.expand(xyz.size(0), -1)  # [N, latent_dim]
-        inp = torch.cat([xyz, z_repeated], dim=-1)  # [N, latent_dim+3]
-        return self.shared_net(inp)  # [N, 64]
+    def forward(self, xtz_mat):
+        return self.shared_net(xtz_mat)  # [N, output_dim]
 
 
 class MultiMeasurementHeads(nn.Module):
+    """
+    Generates physical properties from spacetime coordinates and z_mat
+    """
 
-    def __init__(self, latent_dim: int = 32):
+    def __init__(self, spacetime_dim=2):
+        super().__init__()
+        self.spacetime_dim = spacetime_dim
+        self.heads = nn.ModuleDict({
+            "heat": nn.Linear(self.spacetime_dim + 1, 1),
+            "diffusion": nn.Linear(self.spacetime_dim + 1, 1),
+            "wave": nn.Linear(self.spacetime_dim + 1, 1)
+        })
 
-        self.net = nn.Sequential(
-
-        )
-
-    def forward():
-        return self.heads()
+    def forward(self, xtz_mat, physical_measurement):
+        return self.heads[physical_measurement](xtz_mat)
 
 
 class MultiPropertyHeads(nn.Module):
@@ -57,14 +63,14 @@ class MultiPropertyHeads(nn.Module):
     Outputs multiple physical properties from the shared decoder representation.
     Each head corresponds to one property (e.g., alpha, wave_speed).
     """
-    def __init__(self, hidden_dim=64):
+    def __init__(self, latent_dim=32, spacetime_dim=1):
         super().__init__()
         self.heads = nn.ModuleDict({
-            "alpha": nn.Linear(hidden_dim + 3, 1),         # thermal diffusivity
-            "wave_speed": nn.Linear(hidden_dim + 3, 1),    # wave speed
-            "permeability": nn.Linear(hidden_dim + 3, 1)   # porous flow
+            "heat": nn.Linear(latent_dim + spacetime_dim, 1), # thermal diffusivity
+            "wave": nn.Linear(latent_dim + spacetime_dim, 1),  # wave speed
+            "diffusion": nn.Linear(latent_dim + spacetime_dim, 1)  # porous flow
             # Add more as needed
         })
 
-    def forward(self, hidden, prop_name):
-        return self.heads[prop_name](hidden)  # [N, 1]
+    def forward(self, xz_mat, prop_name):
+        return self.heads[prop_name](xz_mat)  # [N, 1]

@@ -6,6 +6,7 @@ import torch.autograd as autograd
 class WavePDEResidualLoss(nn.Module):
 
     def forward(self, xt, u_pred, phys_coeff_pred, nt):
+
         du_dxt = autograd.grad(
             outputs=u_pred,
             inputs=xt,
