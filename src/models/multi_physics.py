@@ -12,7 +12,8 @@ class Encoder(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(input_dim, 32),
             nn.ReLU(),
-            nn.Linear(32, latent_dim)
+            nn.Linear(32, latent_dim),
+            nn.Tanh()
         )
         self.attn = nn.MultiheadAttention(embed_dim=latent_dim, num_heads=num_heads, batch_first=True)
         self.query = nn.Parameter(torch.randn(1, 1, latent_dim))  # shape: [B, 1, latent_dim]
@@ -23,21 +24,6 @@ class Encoder(nn.Module):
         z_global, attn_weights = self.attn(Q, z_points, z_points)  # output: [1, 1, latent_dim]
         return z_global.squeeze(0)       # [1, latent_dim], [1, N]
 
-
-class SharedDecoder(nn.Module):
-    """
-    Decodes z_mat and spatial coords into a hidden representation shared across all property heads.
-    """
-    def __init__(self, latent_dim=32, output_dim=16):
-        super().__init__()
-        self.shared_net = nn.Sequential(
-            nn.Linear(latent_dim + 2, 32),  # x + z_mat
-            nn.ReLU(),
-            nn.Linear(32, output_dim)
-        )
-
-    def forward(self, xtz_mat):
-        return self.shared_net(xtz_mat)  # [N, output_dim]
 
 
 class MultiMeasurementHeads(nn.Module):
