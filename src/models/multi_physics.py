@@ -6,13 +6,13 @@ class Encoder(nn.Module):
     """
     Encodes (x, t, u, u_type) into a latent material representation z_mat
     """
-    def __init__(self, input_dim=5, latent_dim=32, num_heads=1):
+    def __init__(self, input_dim=6, latent_dim=32, num_heads=1):
         super().__init__()
 
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 32),
             nn.ReLU(),
-            nn.Linear(64, latent_dim)
+            nn.Linear(32, latent_dim)
         )
         self.attn = nn.MultiheadAttention(embed_dim=latent_dim, num_heads=num_heads, batch_first=True)
         self.query = nn.Parameter(torch.randn(1, 1, latent_dim))  # shape: [B, 1, latent_dim]
@@ -31,9 +31,9 @@ class SharedDecoder(nn.Module):
     def __init__(self, latent_dim=32, output_dim=16):
         super().__init__()
         self.shared_net = nn.Sequential(
-            nn.Linear(latent_dim + 2, 64),  # x + z_mat
+            nn.Linear(latent_dim + 2, 32),  # x + z_mat
             nn.ReLU(),
-            nn.Linear(64, output_dim)
+            nn.Linear(32, output_dim)
         )
 
     def forward(self, xtz_mat):
@@ -49,9 +49,30 @@ class MultiMeasurementHeads(nn.Module):
         super().__init__()
         self.spacetime_dim = spacetime_dim
         self.heads = nn.ModuleDict({
-            "heat": nn.Linear(self.spacetime_dim + 1, 1),
-            "diffusion": nn.Linear(self.spacetime_dim + 1, 1),
-            "wave": nn.Linear(self.spacetime_dim + 1, 1)
+            "heat": nn.Sequential(
+            nn.Linear(in_features=self.spacetime_dim + 1, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
+        ),
+            "diffusion": nn.Sequential(
+            nn.Linear(in_features=self.spacetime_dim + 1, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
+        ),
+            "wave": nn.Sequential(
+            nn.Linear(in_features=self.spacetime_dim + 1, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
+        )
         })
 
     def forward(self, xtz_mat, physical_measurement):
@@ -66,9 +87,30 @@ class MultiPropertyHeads(nn.Module):
     def __init__(self, latent_dim=32, spacetime_dim=1):
         super().__init__()
         self.heads = nn.ModuleDict({
-            "heat": nn.Linear(latent_dim + spacetime_dim, 1), # thermal diffusivity
-            "wave": nn.Linear(latent_dim + spacetime_dim, 1),  # wave speed
-            "diffusion": nn.Linear(latent_dim + spacetime_dim, 1)  # porous flow
+            "heat": nn.Sequential(
+            nn.Linear(in_features=latent_dim + spacetime_dim, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
+        ), # thermal diffusivity
+            "wave": nn.Sequential(
+            nn.Linear(in_features=latent_dim + spacetime_dim, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
+        ),  # wave speed
+            "diffusion": nn.Sequential(
+            nn.Linear(in_features=latent_dim + spacetime_dim, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12, out_features=12),
+            nn.Tanh(),
+            nn.Linear(in_features=12,out_features=1),
+            nn.ReLU()
+        )  # porous flow
             # Add more as needed
         })
 
