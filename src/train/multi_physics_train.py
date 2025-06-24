@@ -7,24 +7,14 @@ def train_one_epoch(dataloader, encoder, decoder_dict, optimizer, loss_function)
 
     for data_batch in dataloader:
         
-        x = data_batch['x'].requires_grad_(True)  # (N, 1)
-        xt = data_batch['xt'].requires_grad_(True)
-        u_xt = data_batch['u_xt'].reshape(-1, 1).requires_grad_(True)  # (N, 1)
-        u_type = data_batch['u_type'].reshape(-1,1).requires_grad_(True)
+        x = data_batch['x']
+        xt = data_batch['xt']
+        u_xt = data_batch['u_xt'].reshape(-1, 1)
         u_type_txt = data_batch['u_type_txt']
+        encoder_input = data_batch["encoder_input"]
 
-        # Build input and encode
-        u_type = xt.expand(u_xt.size(0), -1)
-        inp = torch.cat([xt, u_xt, u_type], dim=1)  # (N, 4)
-        z_mat = encoder(inp)  # (1, latent_dim)
-
-        # Build decoder input & decode
-        # z_repeated = z_mat.expand(xt.size(0), -1)  # [N, latent_dim]
-        # xtz_mat = torch.cat([xt, z_repeated], dim=1)  # [N, latent_dim+1]
-        # shared_decoding = decoder_dict['shared_decoder'](xtz_mat)
-
-        # Predict physical coefficient (shared decoder + head)
-        # property = decoder_dict['properties'](xtz_mat, u_type_txt)
+        # Encode
+        z_mat = encoder(encoder_input)  # (1, latent_dim)
 
         # Predict physical coefficient (shared decoder + head)
         z_repeated = z_mat.expand(x.size(0), -1)  # [N, latent_dim]

@@ -4,7 +4,7 @@ import random
 from torch.utils.data import Dataset
 
 from src.data_generator.mesh_grid import generate_mesh_grid
-from src.data_generator.utils import encode_u_type
+from src.data_generator.utils import encode_u_type, concat_encoder_input
 
 
 def solve_diffusion_equation(kappa_x, x, t, dt, dx, u0):
@@ -76,6 +76,14 @@ class DiffusionEquationDataset(Dataset):
                 "u_xt": u_xt,         # shape: (nt+1, nx)
                 "u0": u0,
             }
+            for v in ["x", "xt", "u_xt", "u_type"]:
+                item_information[v] = item_information[v].requires_grad_(True)
+            
+            item_information["encoder_input"] = concat_encoder_input(
+                u_xt=item_information["u_xt"],
+                xt=item_information["xt"],
+                u_type=item_information["u_type"]
+            ).requires_grad_(True)
 
             item_information["x"] = item_information["x"].reshape(-1,1)
 
