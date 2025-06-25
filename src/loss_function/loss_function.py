@@ -22,7 +22,7 @@ class PhysicalPropertyResidualLoss(nn.Module):
 
 class Loss(nn.Module):
 
-    def __init__(self, pde_coefficient: float = 1.0, alpha_reg_coefficient: float = 1.0, phys_property_coefficient: float = 0.0):
+    def __init__(self, pde_coefficient: float = 10.0, alpha_reg_coefficient: float = 1.0, phys_property_coefficient: float = 0.0):
         
         super().__init__()
         self.data_loss = DataLoss()
