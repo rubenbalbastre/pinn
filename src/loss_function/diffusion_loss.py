@@ -29,7 +29,7 @@ class DiffusionPDEResidualLoss(nn.Module):
 
         residual = u_t - grad_kappa_u_x
 
-        return torch.sum(residual**2)
+        return torch.mean(residual**2)
 
 
 class KappaRegularizationLoss(nn.Module):

@@ -32,7 +32,7 @@ class HeatPDEResidualLoss(nn.Module):
         alpha_expanded = phys_coeff_pred.repeat_interleave(nt, dim=0)
         residual = u_t - alpha_expanded * u_xx
 
-        loss = torch.sum(residual**2)
+        loss = torch.mean(residual**2)
 
         return loss
 

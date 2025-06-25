@@ -37,7 +37,7 @@ class WavePDEResidualLoss(nn.Module):
         c_expanded = phys_coeff_pred.repeat_interleave(nt, dim=0)
         residual = u_tt - c_expanded**2 * u_xx
 
-        return torch.sum(residual**2)
+        return torch.mean(residual**2)
 
 
 class CRegularizationLoss(nn.Module):

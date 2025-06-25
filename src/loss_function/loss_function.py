@@ -9,7 +9,7 @@ from src.loss_function.diffusion_loss import DiffusionPDEResidualLoss, KappaRegu
 class DataLoss(nn.Module):
 
     def forward(self, u, u_pred):
-        loss = torch.sum((u-u_pred)**2)
+        loss = torch.mean((u-u_pred)**2)
         return loss
     
 
@@ -50,5 +50,9 @@ class Loss(nn.Module):
             + self.pde_coefficient * self.pde_loss[u_type](xt=xt, u_pred=u_pred, phys_coeff_pred=phys_coeff_pred, nt=nt) 
             + self.alpha_reg_coefficient * self.phys_coeff_regularization[u_type](phys_coeff_pred=phys_coeff_pred, x=x)
         )
+
+        # print("Data Loss: ", self.data_loss(u=u_obs, u_pred=u_pred))
+        # print("PDE Loss: ", self.pde_loss[u_type](xt=xt, u_pred=u_pred, phys_coeff_pred=phys_coeff_pred, nt=nt) )
+        # print("alpha Loss: ", self.phys_coeff_regularization[u_type](phys_coeff_pred=phys_coeff_pred, x=x))
 
         return loss
