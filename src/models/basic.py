@@ -3,15 +3,15 @@ import torch.nn as nn
 
 class alpha_network(nn.Module):
 
-    def __init__(self):
+    def __init__(self, hidden_dim=16):
         super(alpha_network, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(in_features=1, out_features=12),
+            nn.Linear(in_features=1, out_features=hidden_dim),
             nn.Tanh(),
-            nn.Linear(in_features=12, out_features=12),
+            nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
             nn.Tanh(),
-            nn.Linear(in_features=12,out_features=1),
-            nn.ReLU()
+            nn.Linear(in_features=hidden_dim,out_features=1),
+            nn.Tanh()
         )
 
     def forward(self, x):
@@ -20,15 +20,13 @@ class alpha_network(nn.Module):
 
 class u_network(nn.Module):
 
-    def __init__(self):
+    def __init__(self, hidden_dim=16):
         super(u_network, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(in_features=2, out_features=12),
+            nn.Linear(in_features=2, out_features=hidden_dim),
             nn.Tanh(),
-            nn.Linear(in_features=12, out_features=12),
-            nn.Tanh(),
-            nn.Linear(in_features=12,out_features=1),
-            nn.ReLU()
+            nn.Linear(in_features=hidden_dim,out_features=1),
+            nn.Tanh()
         )
 
     def forward(self, xt):
