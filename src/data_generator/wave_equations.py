@@ -61,14 +61,18 @@ class WaveEquationDataset(Dataset):
 
             # boundaries
             u0 = torch.sin(math.pi * mesh["x"])
-            x = torch.linspace(0, L, nx)
-            t = torch.linspace(0, T, nt)
-            dx = L / (nx - 1)
-            dt = T / nt
-            u0 = torch.sin(math.pi * x)
-            v0 = torch.zeros_like(x)
+            v0 = torch.zeros_like(mesh["x"])
 
-            u_xt = solve_wave_equation(c_x, x, t, dt, dx, u0, v0)
+            # solve PDE
+            u_xt = solve_wave_equation(
+                c_x=c_x, 
+                x=mesh["x"], 
+                t=mesh["t"], 
+                dt=mesh["dt"],
+                dx=mesh["dx"],
+                u0=u0,
+                v0=v0
+            )
 
             item_information = mesh | {
                 "u_type": encode_u_type("wave"),
