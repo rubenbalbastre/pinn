@@ -7,10 +7,10 @@ from src.data_generator.mesh_grid import generate_mesh_grid
 from src.data_generator.utils import encode_u_type, concat_encoder_input
 
 
-def solve_diffusion_equation(kappa_x, x, t, dt, dx, u0):
+def solve_diffusion_equation(alpha_x, x, t, dt, dx, u0):
     """
     Solves the 1D diffusion equation:
-        u_t = d/dx (kappa(x) * du/dx)
+        u_t = d/dx (alpha(x) * du/dx)
     using finite difference approximation.
     """
     nx = x.shape[0]
@@ -21,10 +21,10 @@ def solve_diffusion_equation(kappa_x, x, t, dt, dx, u0):
     for _ in range(1, nt):
         u_new = u.clone()
         for i in range(1, nx - 1):
-            kappa_avg_right = 0.5 * (kappa_x[i] + kappa_x[i+1])
-            kappa_avg_left = 0.5 * (kappa_x[i] + kappa_x[i-1])
-            flux_right = kappa_avg_right * (u[i+1] - u[i]) / dx
-            flux_left = kappa_avg_left * (u[i] - u[i-1]) / dx
+            alpha_avg_right = 0.5 * (alpha_x[i] + alpha_x[i+1])
+            alpha_avg_left = 0.5 * (alpha_x[i] + alpha_x[i-1])
+            flux_right = alpha_avg_right * (u[i+1] - u[i]) / dx
+            flux_left = alpha_avg_left * (u[i] - u[i-1]) / dx
             u_new[i] = u[i] + dt * (flux_right - flux_left) / dx
         u_new[0] = u_new[-1] = 0.0  # Dirichlet BCs
         u = u_new
@@ -33,16 +33,14 @@ def solve_diffusion_equation(kappa_x, x, t, dt, dx, u0):
     return torch.cat(u_sol, dim=0)  # [nt, nx]
 
 
-def generate_kappa_profile(nx, kind="smooth"):
+def generate_alpha_profile(nx, kind="smooth"):
     x = torch.linspace(0, 1, nx)
     if kind == "smooth":
         return 0.5 + 0.3 * torch.sin(2 * math.pi * x)
     elif kind == "piecewise":
-        kappa = torch.ones_like(x) * 0.5
-        kappa[x > 0.5] = 0.2
-        return kappa
-    elif kind == "random":
-        return torch.rand_like(x) * 0.6 + 0.2
+        alpha = torch.ones_like(x) * 0.5
+        alpha[x > 0.5] = 0.2
+        return alpha
     else:
         raise ValueError("Unknown kind")
     
@@ -53,15 +51,15 @@ class DiffusionEquationDataset(Dataset):
 
         self.data = []
         for _ in range(n_samples):
-            # kappa
+            # alpha
             kind = random.choice(["smooth", "piecewise", "random"])
-            kappa_x = generate_kappa_profile(nx, kind)
+            alpha_x = generate_alpha_profile(nx, kind="smooth")
             # mesh
-            mesh = generate_mesh_grid(kappa_x, nx, nt, L, T)
+            mesh = generate_mesh_grid(alpha_x, nx, nt, L, T)
             # boundaries
             u0 = torch.sin(math.pi * mesh["x"])
             u_xt = solve_diffusion_equation(
-                kappa_x, 
+                alpha_x, 
                 x=mesh["x"], 
                 t=mesh["x"], 
                 dt=mesh["dt"],
@@ -72,7 +70,7 @@ class DiffusionEquationDataset(Dataset):
                 "u_type": encode_u_type("diffusion"),
                 "u_type_txt": "diffusion",
                 "kind": kind,
-                "alpha": kappa_x,     # shape: (nx,)
+                "alpha": alpha_x,     # shape: (nx,)
                 "u_xt": u_xt,         # shape: (nt+1, nx)
                 "u0": u0,
             }

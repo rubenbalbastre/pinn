@@ -11,7 +11,7 @@ class alpha_network(nn.Module):
             nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
             nn.Tanh(),
             nn.Linear(in_features=hidden_dim,out_features=1),
-            nn.Softplus()
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -26,7 +26,7 @@ class u_network(nn.Module):
             nn.Linear(in_features=2, out_features=hidden_dim),
             nn.Tanh(),
             nn.Linear(in_features=hidden_dim,out_features=1),
-            nn.Softplus()
+            nn.Sigmoid()
         )
 
     def forward(self, xt):
