@@ -17,17 +17,17 @@ def plot_sample(sample, u_xt_pred, xt_pred_mesh):
     fig, ax = plt.subplots(figsize=(24, 4), nrows=1, ncols=3)
 
     im0 = ax[0].imshow(u_xt, aspect="auto", origin="lower", extent=[x.min(), x.max(), t.min(), t.max()])
-    fig.colorbar(im0, ax=ax[0], label="Temperature")
+    fig.colorbar(im0, ax=ax[0], label="True Measurement")
     ax[0].set_xlabel("x")
     ax[0].set_ylabel("Time")
 
     im1 = ax[1].imshow(u_xt_pred, aspect="auto", origin="lower", extent=[x_pred.min(), x_pred.max(), t_pred.min(), t_pred.max()])
-    fig.colorbar(im1, ax=ax[1], label="Temperature NN")
+    fig.colorbar(im1, ax=ax[1], label="NN Prediction")
     ax[1].set_xlabel("x")
     ax[1].set_ylabel("Time")
 
     im2 = ax[2].imshow(np.abs(u_xt - u_xt_pred), aspect="auto", origin="lower", extent=[x_pred.min(), x_pred.max(), t_pred.min(), t_pred.max()])
-    fig.colorbar(im2, ax=ax[2], label="Temperature Absolute error")
+    fig.colorbar(im2, ax=ax[2], label="Measurement Absolute error")
     ax[2].set_xlabel("x")
     ax[2].set_ylabel("Time")
 

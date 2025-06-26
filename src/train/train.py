@@ -1,20 +1,30 @@
-
+import torch
 
 
 def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
 
     epoch_loss = 0
 
-    for data_batch in dataset: #tqdm(dataset, desc=f"Batches"):
+    for data_batch in dataset:
 
-        # predict u(x,t), alpha(x)
-        x = data_batch["x"].requires_grad_(True)
-        xt = data_batch["xt"].requires_grad_(True)
-        u_xt = data_batch["u_xt"].requires_grad_(True)
+        x = data_batch["x"]
+        xt = data_batch["xt"]
+        u_xt = data_batch["u_xt"]
 
+        # # predict alpha(x)
+        # phys_coeff_pred = alpha_net(x=x)
+
+        # # predict u(x,t)
+        # phys_coeff_pred_repeated = phys_coeff_pred.repeat(1, data_batch["nt"]).flatten().unsqueeze(1)
+        # xt_alpha = torch.cat([xt, phys_coeff_pred_repeated], dim=1)
+        # u_pred = u_net(xt_alpha).reshape(data_batch["nx"], data_batch["nt"])
+
+        # predict alpha(x)
+        phys_coeff_pred = alpha_net(x=x)
+
+        # predict u(x,t)
         u_pred = u_net(xt).reshape(data_batch["nx"], data_batch["nt"])
 
-        phys_coeff_pred = alpha_net(x=x)
 
         optimizer.zero_grad()
 
@@ -40,7 +50,7 @@ def train_one_epoch(dataset, u_net, alpha_net, optimizer, loss_function):
     return epoch_loss
 
 
-def train(dataset, u_net, alpha_net, loss_function, optimizer, epochs=1000):
+def train(dataset, u_net, alpha_net, loss_function, optimizer, epochs=3000):
 
     losses = []
     

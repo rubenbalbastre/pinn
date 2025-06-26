@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from src.loss_function.heat_loss import HeatPDEResidualLoss, AlphaRegularizationLoss
 from src.loss_function.wave_loss import WavePDEResidualLoss, CRegularizationLoss
 from src.loss_function.diffusion_loss import DiffusionPDEResidualLoss, KappaRegularizationLoss
 
@@ -16,7 +15,7 @@ class DataLoss(nn.Module):
 class PhysicalPropertyResidualLoss(nn.Module):
 
     def forward(self, phys_coeff, phys_coeff_pred):
-        res = torch.mean((phys_coeff - phys_coeff_pred)**2)
+        res = torch.mean((phys_coeff - phys_coeff_pred)**2) #+ (phys_coeff_pred > 1).sum()**4
         return res
     
 
@@ -29,13 +28,11 @@ class Loss(nn.Module):
         self.property_loss = PhysicalPropertyResidualLoss()
         self.pde_loss = {
             "diffusion": DiffusionPDEResidualLoss(),
-            "wave": WavePDEResidualLoss(),
-            "heat": HeatPDEResidualLoss()
+            "wave": WavePDEResidualLoss()
         }
         self.phys_coeff_regularization = {
             "diffusion": KappaRegularizationLoss(),
-            "wave": CRegularizationLoss(),
-            "heat": AlphaRegularizationLoss()
+            "wave": CRegularizationLoss()
         }
 
         self.phys_property_coefficient = phys_property_coefficient

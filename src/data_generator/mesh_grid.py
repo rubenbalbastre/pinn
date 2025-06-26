@@ -1,7 +1,7 @@
 import torch
 
 
-def generate_mesh_grid(alpha_x, nx=100, nt=100, L=1.0, T=0.1):
+def generate_mesh_grid(alpha_x, nx=100, nt=100, L=1.0, T=100):
 
     dx = L / (nx - 1)
     
@@ -18,3 +18,18 @@ def generate_mesh_grid(alpha_x, nx=100, nt=100, L=1.0, T=0.1):
     xt = torch.stack([X_mesh.flatten(), T_mesh.flatten()], dim=1) # shape [nx*nt, 2]
 
     return {"xt": xt, "x": x, "t": t, "nx": nx, "nt": nt, "dt": dt, "dx": dx, "L": L, "T": T}
+
+
+# def normalize_xt(xt, L, T):
+#     return torch.stack([
+#         xt[:, 0] / L,
+#         xt[:, 1] / T
+#     ], dim=1)
+
+# def normalize_x(x, L, T)
+
+# def denormalize_xt(xt_norm, L, T):
+#     return torch.stack([
+#         xt_norm[:, 0] * L,
+#         xt_norm[:, 1] * T
+#     ], dim=1)
