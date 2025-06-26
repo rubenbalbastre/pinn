@@ -35,3 +35,15 @@ def plot_sample(sample, u_xt_pred, xt_pred_mesh):
 
     plt.show()
     
+
+def plot_physical_property(x, property_true, property_pred):
+
+    plt.plot(x, property_true, label="true", color='b')
+    plt.xlabel("x")
+    plt.ylabel("property")
+    plt.plot(x, property_pred, label='pred', color='r', linestyle='--')
+    plt.legend()
+    plt.title("Physical Property Prediction")
+    plt.grid()
+
+    plt.show()
