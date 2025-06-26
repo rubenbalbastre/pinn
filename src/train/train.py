@@ -62,3 +62,5 @@ def train(dataset, u_net, alpha_net, loss_function, optimizer, epochs=3000):
         if epoch % 20 == 0:
             print(f"Epoch {epoch}: Loss = {epoch_loss.item():.4e}")
 
+    return losses
+

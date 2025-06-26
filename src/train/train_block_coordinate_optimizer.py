@@ -82,3 +82,4 @@ def train_bcd(dataset, u_net, alpha_net, loss_function_u, loss_function_alpha, o
         if epoch % 20 == 0:
             print(f"Epoch {epoch}: Loss = {epoch_loss.item():.4e}")
 
+    return losses

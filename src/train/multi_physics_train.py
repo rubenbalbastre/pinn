@@ -62,3 +62,5 @@ def train(dataset, encoder, decoder, loss_function, optimizer, epochs=1000, batc
         losses.append(epoch_loss)
         if epoch % 20 == 0:
             print(f"Epoch {epoch}: Loss = {epoch_loss:.4e}")
+
+    return losses
