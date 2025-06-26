@@ -19,19 +19,22 @@ class HeatPDEResidualLoss(nn.Module):
         u_x = du_dxt[:, 0].unsqueeze(-1)  # ∂u/∂x
         u_t = du_dxt[:, 1].unsqueeze(-1)  # ∂u/∂t
 
-        # Compute ∂²u/∂x² by differentiating u_x w.r.t xt again, select derivative w.r.t x
-        u_xx = autograd.grad(
-            outputs=u_x,
+        # α(x) * ∂u/∂x
+        alpha_expanded = phys_coeff_pred.repeat_interleave(nt, dim=0)
+        flux = alpha_expanded * u_x
+
+        # ∂/∂x (α ∂u/∂x)
+        dflux_dxdt = autograd.grad(
+            outputs=flux,
             inputs=xt,
-            grad_outputs=torch.ones_like(u_x),
+            grad_outputs=torch.ones_like(flux),
             create_graph=True,
             retain_graph=True
-        )[0][:, 0].unsqueeze(-1)
+        )[0]
 
-        # residual
-        alpha_expanded = phys_coeff_pred.repeat_interleave(nt, dim=0)
-        residual = u_t - alpha_expanded * u_xx
+        dflux_dx = dflux_dxdt[:, 0].unsqueeze(-1)  # ∂flux/∂x
 
+        residual = u_t - dflux_dx
         loss = torch.mean(residual**2)
 
         return loss
