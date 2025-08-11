@@ -37,10 +37,10 @@ class DataLoss(torch.nn.Module):
 
 class PDELoss(torch.nn.Module):
 
-    def __init__(self, risk_free_interest_rate: float, volatility: float):
+    def __init__(self, r: float, sigma: float):
         super().__init__()
-        self.risk_free_interest_rate = risk_free_interest_rate
-        self.volatility = volatility
+        self.r = r
+        self.sigma = sigma
 
     def forward(self, V, St):
 
@@ -69,7 +69,10 @@ class PDELoss(torch.nn.Module):
 
         V_SS = dV_S_dSdt[:, 0].unsqueeze(-1)  # ∂^2V/∂S^2
 
-        residual = V_t + 1/2 * self.volatility**2 * S**2 * V_SS + self.risk_free_interest_rate * S * V_S - self.risk_free_interest_rate * V.reshape(-1)
+        residual = (
+            V_t + 1/2 * self.sigma**2 * S**2 * V_SS 
+            + self.r * S * V_S 
+            - self.r * V.reshape(-1))
         loss = torch.mean(residual**2)
 
         return loss
@@ -77,14 +80,14 @@ class PDELoss(torch.nn.Module):
 
 class Loss(torch.nn.Module):
 
-    def __init__(self, T: float, K: float, risk_free_interest_rate: float, volatility: float, pde_coeff: float = 1.0):
+    def __init__(self, T: float, K: float, r: float, sigma: float, pde_coeff: float = 10.0):
         super().__init__()
-        self.risk_free_interest_rate = risk_free_interest_rate
-        self.volatility = volatility
+        self.r = r
+        self.sigma = sigma
         self.pde_coeff = pde_coeff
 
         self.data_loss = DataLoss()
-        self.pde_loss = PDELoss(risk_free_interest_rate=risk_free_interest_rate, volatility=volatility)
+        self.pde_loss = PDELoss(r=r, sigma=sigma)
         self.boundary_condition_loss = BoundaryConditionLoss(T=T, K=K)
 
     def forward(self, V_pred, V_obs, St):
