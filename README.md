@@ -1,6 +1,10 @@
 # Physics Informed Neural Networks
 
-This repo contains applications of physics informed neural networks (PINNs) applied to solve variations of the physical heat wave equation.
+This repo contains applications of physics informed neural networks (PINNs) applied to solve several partial differential equations such as:
+
+- Diffusion Equations 1D
+- Wave Equation 1D
+- Black-Scholes European Option
 
 # Use 
 
