@@ -1,9 +1,9 @@
 import torch
 
 
-def _soln2orbit_batch(chi, phi, p, M, e, a):
+def soln2orbit_batch(chi, phi, p, M, e, a):
     """
-    Batched version of soln2orbit.
+    Convert solution (chi, phi) to orbit (x, y) in Cartesian coordinates.
     chi, phi: (B, T)
     p, M, e, a: (B, 4)
     Returns orbit: (B, 2, T)
@@ -14,9 +14,9 @@ def _soln2orbit_batch(chi, phi, p, M, e, a):
     return torch.stack((x, y), dim=1)
 
 
-def _orbit2tensor_batch(orbit, component, mass=1.0):
+def orbit2tensor_batch(orbit, component, mass=1.0):
     """
-    Batched version of orbit2tensor.
+    Convert orbit to the relevant component of the mass quadrupole moment tensor.
     orbit: (B, 2, T) -> returns (B, T)
     """
     x = orbit[:, 0, :]
@@ -49,7 +49,7 @@ def d2_dt2(v, dt):
 
 def _smooth_1d_batch(v, window=5):
     """
-    v: (B, T)
+    Apply a simple moving average filter to smooth the input tensor along the last dimension.
     """
     if window <= 1:
         return v
@@ -61,9 +61,9 @@ def _smooth_1d_batch(v, window=5):
 
 def _h_22_quadrupole_components_batch(dt, orbit, component, mass=1.0, smooth_window=21):
     """
-    orbit: (B, 2, T)
+    Compute the relevant component of the second time derivative of the mass quadrupole moment tensor for a batch of orbits.
     """
-    mtensor = _orbit2tensor_batch(orbit, component, mass)
+    mtensor = orbit2tensor_batch(orbit, component, mass)
     if smooth_window and smooth_window > 1:
         mtensor = _smooth_1d_batch(mtensor, window=smooth_window)
     mtensor_ddot = d2_dt2(mtensor, dt)
@@ -71,6 +71,9 @@ def _h_22_quadrupole_components_batch(dt, orbit, component, mass=1.0, smooth_win
 
 
 def _h_22_quadrupole_batch(dt, orbit, mass=1.0, smooth_window=21):
+    """
+    Compute the relevant components of the second time derivative of the mass quadrupole moment tensor for a batch of orbits.
+    """
     h11 = _h_22_quadrupole_components_batch(dt, orbit, (1, 1), mass, smooth_window=smooth_window)
     h22 = _h_22_quadrupole_components_batch(dt, orbit, (2, 2), mass, smooth_window=smooth_window)
     h12 = _h_22_quadrupole_components_batch(dt, orbit, (1, 2), mass, smooth_window=smooth_window)
@@ -78,6 +81,9 @@ def _h_22_quadrupole_batch(dt, orbit, mass=1.0, smooth_window=21):
 
 
 def _h_22_strain_one_body_batch(dt, orbit, smooth_window=21):
+    """
+    Compute the h_22 strain components for a batch of orbits using the quadrupole formula.
+    """
     h11, h12, h22 = _h_22_quadrupole_batch(dt, orbit, smooth_window=smooth_window)
     h_plus = h11 - h22
     h_cross = 2.0 * h12
@@ -85,9 +91,25 @@ def _h_22_strain_one_body_batch(dt, orbit, smooth_window=21):
     return scaling_const * h_plus, -scaling_const * h_cross
 
 
+def compute_orbit(u, system_params):
+    """
+    Compute the orbit from the solution u and system parameters.
+    """
+    chi = u[:, 0, :]
+    phi = u[:, 1, :]
+
+    p = system_params['p']
+    M = system_params['M']
+    e = system_params['e']
+    a = system_params['a']
+
+    orbit = soln2orbit_batch(chi, phi, p, M, e, a)
+
+    return orbit
+
+
 def compute_waveform(
-    u,
-    system_params,
+    orbit, system_params,
     smooth_window: int = 21,
 ):
     """
@@ -99,17 +121,8 @@ def compute_waveform(
     Returns:
     - waveform: (h_plus, h_cross) each (B, 2, T)
     """
-    chi = u[:, 0, :]
-    phi = u[:, 1, :]
 
-    p = system_params['p']
-    M = system_params['M']
-    e = system_params['e']
-    a = system_params['a']
     dt = system_params['dt_data'][0]
-
-    orbit = _soln2orbit_batch(chi, phi, p, M, e, a)
-
     waveform, _ = _h_22_strain_one_body_batch(dt, orbit, smooth_window=smooth_window)
 
     return waveform

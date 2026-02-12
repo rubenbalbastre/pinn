@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 
 from numerical_solvers import solve_ode_rk2
-from orbital_mechanics import compute_waveform
+from orbital_mechanics import compute_waveform, compute_orbit
 from schwarzschild_models import RelativisticOrbitModelSchwarzschildODE
 
 
@@ -46,9 +46,10 @@ class OrbitDataset(Dataset):
                 ode_problem=ode_problem,
                 system_params=system_params
             )
-            system_waveform = compute_waveform(u=system_solution, system_params=system_params)
+            system_orbit = compute_orbit(system_solution, system_params)
+            system_waveform = compute_waveform(system_orbit, system_params=system_params)
 
-            item = system_params | {'solution': system_solution, 'waveform': system_waveform}
+            item = system_params | {'solution': system_solution, 'orbit': system_orbit, 'waveform': system_waveform}
 
             item = {k: v.squeeze(0) for k, v in item.items()}  # remove batch dim for storage
             self.data_list.append(item)
