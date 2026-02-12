@@ -1,15 +1,24 @@
-# Physics Informed Neural Networks
+# Physics-Informed Neural Networks (PINNs)
 
-This repo contains applications of physics informed neural networks (PINNs) applied to solve several partial differential equations such as:
+This repo collects PINN experiments for inverse PDE problems. All problems are formulated and solved in inverse form.
 
-- Diffusion Equations 1D
-- Wave Equation 1D
-- Black-Scholes European Option
+## Problem Types
+- All problems are solved as inverse problems.
+- All problems except **BBH EMR** are **discrete inverse problems**.
+- **BBH EMR** is solved in **both discrete and continuous** inverse forms.
 
-# Use 
+## Experiments
+The main notebooks live under `experiments/`, organized by problem:
+- `experiments/toy_problem/`
+- `experiments/diffusion_equation/`
+- `experiments/options/`
+- `experiments/multi_physics/`
+- `experiments/binary_black_holes_emr_inverse_problem/` (BBH EMR)
 
-Use python 3.12.3 and install the requirements.txt
+## Setup
+Use Python 3.12.3 and install dependencies:
 
-```
+```bash
 pip install -r requirements.txt
 ```
+
