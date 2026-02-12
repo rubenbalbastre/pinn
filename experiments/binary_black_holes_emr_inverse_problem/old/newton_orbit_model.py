@@ -57,3 +57,29 @@ def NNOrbitModel_Newton_EMR(t, u, model_params):
     ϕ_dot = (numer / denom) * nn[1]
 
     return torch.stack([χ_dot, ϕ_dot])
+
+
+class NNOrbitModel_Newton_EMR(nn.Module):
+    
+    def __init__(self, p, M , e, network):
+        super().__init__()
+        self.p = p
+        self.M = M
+        self.e = e
+        self.network = network
+
+    def forward(self, t, u):
+        
+        χ, ϕ = torch.unbind(u, dim=1)
+        χ = χ.unsqueeze(1)  # (B, 1)
+        ϕ = ϕ.unsqueeze(1)  # (B, 1
+
+        # Output should be a (B,2) - element tensor (e.g., [Δχ̇, Δϕ̇])
+        out = 1 + self.network(u)
+
+        numer = (1 + self.e * torch.cos(χ)) ** 2
+        denom = self.M * (self.p ** 1.5)
+        χ_dot = (numer / denom) * out[:, 0].unsqueeze(1)
+        ϕ_dot = (numer / denom) * out[:, 1].unsqueeze(1)
+        
+        return torch.cat([χ_dot, ϕ_dot], dim=1)
