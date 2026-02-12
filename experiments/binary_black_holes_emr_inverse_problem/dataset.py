@@ -67,14 +67,14 @@ class ScharzschildDataset(Dataset):
 
 class KerrDataset(Dataset):
 
-    def __init__(self, chi0: float, phi0: float, p_space: list, M: float, e: float, a: float, train_mesh):
+    def __init__(self, chi0: float, phi0: float, p: float, M: float, e: float, a_space: list, train_mesh):
         self.data_list = []
-        self._generate_data(chi0, phi0, p_space, M, e, a, train_mesh)
+        self._generate_data(chi0, phi0, p, M, e, a_space, train_mesh)
 
 
-    def _generate_data(self, chi0, phi0, p_space, M, e, a, train_mesh):
+    def _generate_data(self, chi0, phi0, p, M, e, a_space, train_mesh):
 
-        for p in p_space:
+        for a in a_space:
 
             system_params = {
                 # mesh

@@ -69,49 +69,42 @@ class BasicNN(nn.Module):
 
 class NNOrbitModel_Kerr_EMR(nn.Module):
     
-    def __init__(self, p, M , e, network):
+    def __init__(self, p, M , e, a, network):
         super().__init__()
         self.p = p
         self.M = M
         self.e = e
+        self.a = a
         self.network = network
 
-    def update_params(self, p=None, M=None, e=None):
+    def update_params(self, p=None, M=None, e=None, a=None):
         if p is not None: 
             self.p = p 
         if M is not None: 
             self.M = M 
         if e is not None: 
             self.e = e
+        if a is not None:
+            self.a = a
 
     def forward(self, t, u):
+        """
+        Implements the same idea from Schwarzschild. System parameter a only goes as input to the network, not to the physics part of the model. 
+        """
         
         χ, ϕ = torch.unbind(u, dim=1)
         χ = χ.unsqueeze(1)  # (B, 1)
         ϕ = ϕ.unsqueeze(1)  # (B, 1)
 
-        p = self.p
-        e = self.e
-        a = self.a 
-        M = self.M
+        # Output should be a (B,2) - element tensor (e.g., [Δχ̇, Δϕ̇])
+        out = 1 + self.network(u)
 
-        # network prediction
-        out = self.network(u)
+        numer = (self.p-2-2*self.e*torch.cos(χ)) * (1+self.e*torch.cos(χ))**2
+        denom = torch.sqrt( (self.p-2)**2-4*self.e**2 )
 
-        # Kerr dynamics
-        L = L_kerr(p, e, M, a)
-        E = E_kerr(p, e, M, a)
-        r = p * M / (1 + e * torch.cos(χ))
-        drdchi = p * M * e * torch.sin(χ) / (1 + e * torch.cos(χ))**2
-        Delta = r**2 - 2 * M * r + a**2
-
-        dphidtau = ((1 - 2*M/r) * L + 2 * M * a * E / r) / Delta
-        dtdtau = ((r**2 + a**2 + 2 * M * a**2 / r) * E - 2 * M * a * L / r) / Delta
-        drdtau = compute_drdtau(χ, a, Delta, L, E, r, M)
-
-        ϕ_dot = (dphidtau / dtdtau) * out[0]
-        χ_dot = (drdtau / (dtdtau * drdchi)) * out[1]
-
+        χ_dot = (numer / (self.M*(self.p**(3/2))*denom)) * out[:, 0].unsqueeze(1)
+        ϕ_dot = (numer * torch.sqrt( self.p-6-2*self.e*torch.cos(χ) )/( self.M*(self.p**2)*denom )) * out[:, 1].unsqueeze(1)
+        
         return torch.cat([χ_dot, ϕ_dot], dim=1)
 
 
@@ -119,14 +112,14 @@ def compute_drdtau(chi, a, Delta, L, E, r, M):
     """
     Avoid numerical issues computing dr/dτ in PyTorch
     """
-    # term = (r**2 * E**2 + 2 * M * (a * E - L)**2 / r + (a**2 * E**2 - L**2) - Delta) / r**2
-    # dr_dtau = torch.sqrt(term)  # add epsilon for stability
-    # dr_dtau = torch.where(torch.sin(chi) < 0, -dr_dtau, dr_dtau)
-
     term = (r**2 * E**2 + 2 * M * (a * E - L)**2 / r + (a**2 * E**2 - L**2) - Delta) / r**2
-    # Clamp to avoid invalid sqrt from small negative values due to numerics.
-    term = torch.clamp(term, min=1e-12)
-    dr_dtau = torch.sqrt(term)
+    dr_dtau = torch.sqrt(term)  # add epsilon for stability
+    dr_dtau = torch.where(torch.sin(chi) < 0, -dr_dtau, dr_dtau)
+
+    # term = (r**2 * E**2 + 2 * M * (a * E - L)**2 / r + (a**2 * E**2 - L**2) - Delta) / r**2
+    # # Clamp to avoid invalid sqrt from small negative values due to numerics.
+    # term = torch.clamp(term, min=1e-12)
+    # dr_dtau = torch.sqrt(term)
 
     return dr_dtau
 
