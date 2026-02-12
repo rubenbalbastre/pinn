@@ -4,6 +4,12 @@ This folder contains experiments for learning corrections to relativistic orbita
 
 ## Files
 - `run_schwarzschild.ipynb`: End-to-end pipeline for dataset generation, model definition, training, and evaluation for the Schwarzschild case.
+- `run_kerr.ipynb`: End-to-end pipeline for the Kerr case.
+- `dataset.py`: Dataset generation helpers.
+- `numerical_solvers.py`: Fixed-step ODE solvers.
+- `schwarzschild_models.py`: Schwarzschild dynamics and waveform utilities.
+- `kerr_models.py`: Kerr dynamics and waveform utilities.
+- `orbital_mechanics.py`: Shared orbital mechanics utilities.
 
 ## Workflow Summary
 1. Generate training/validation data by integrating the Schwarzschild equations of motion with a fixed-step solver and computing the quadrupole waveform.
@@ -20,4 +26,3 @@ This folder contains experiments for learning corrections to relativistic orbita
 ## Plots
 - `plot_waveform(...)` shows the waveform over time.
 - `plot_phase_space(...)` shows the space trajectory.
-
