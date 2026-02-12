@@ -10,11 +10,9 @@ def compute_drdtau(chi, a, Delta, L, E, r, M):
     # dr_dtau = torch.where(torch.sin(chi) < 0, -dr_dtau, dr_dtau)
 
     term = (r**2 * E**2 + 2 * M * (a * E - L)**2 / r + (a**2 * E**2 - L**2) - Delta) / r**2
-    # print("var", chi, a, Delta, L, E, r, M)
-    # print(term, torch.sin(chi))
-    dr_dtau = torch.sqrt(term + 0j)  # add epsilon for stability
-    # dr_dtau = torch.where(torch.sin(chi) < 0, -dr_dtau, dr_dtau)
-    dr_dtau = torch.where(dr_dtau.real != 0, dr_dtau.real, -dr_dtau.imag)
+    # Clamp to avoid invalid sqrt from small negative values due to numerics.
+    term = torch.clamp(term, min=1e-12)
+    dr_dtau = torch.sqrt(term)
 
     return dr_dtau
 
@@ -23,12 +21,15 @@ def E_kerr(p, e, M, a):
     """
     Energy of Kerr time-like geodesic
     """
-    res = torch.sqrt((M**4*p**3*(-2 - 2*e + p)*(-2 + 2*e + p)*(-3 - e**2 + p) - 
-    a**2*(-1 + e**2)**2*M**2*p**2*(-5 + e**2 + 3*p) - 
-    2*torch.sqrt(a**2*(-1 + e**2)**4*M**2*p**3*(a**4*(-1 + e**2)**2 + 
-        M**4*(-4*e**2 + (-2 + p)**2)*p**2 + 
-        2*a**2*M**2*p*(-2 + p + e**2*(2 + p)))))/(M**2*p**3*(-4*a**2*(-1 + 
-         e**2)**2 + M**2*(3 + e**2 - p)**2*p)))
+    inner = a**2*(-1 + e**2)**4*M**2*p**3*(a**4*(-1 + e**2)**2 +
+        M**4*(-4*e**2 + (-2 + p)**2)*p**2 +
+        2*a**2*M**2*p*(-2 + p + e**2*(2 + p)))
+    inner = torch.clamp(inner, min=1e-12)
+    numerator = (M**4*p**3*(-2 - 2*e + p)*(-2 + 2*e + p)*(-3 - e**2 + p) -
+    a**2*(-1 + e**2)**2*M**2*p**2*(-5 + e**2 + 3*p) -
+    2*torch.sqrt(inner))
+    denom = (M**2*p**3*(-4*a**2*(-1 + e**2)**2 + M**2*(3 + e**2 - p)**2*p))
+    res = torch.sqrt(torch.clamp(numerator / denom, min=1e-12))
     
     return res
 
@@ -37,17 +38,23 @@ def L_kerr(p, e, M, a):
     """
     Angular momentum of Kerr time-like geodesic
     """
-    res = torch.sqrt((M**4*p**3*(-2 - 2*e + p)*(-2 + 2*e + p)*(-3 - e**2 + p) - 
-            a**2*(-1 + e**2)**2*M**2*p**2*(-5 + e**2 + 3*p) - 
-            2*torch.sqrt(a**2*(-1 + e**2)**4*M**2*p**3*(a**4*(-1 + e**2)**2 + 
-                M**4*(-4*e**2 + (-2 + p)**2)*p**2 + 
-                2*a**2*M**2*p*(-2 + p + e**2*(2 + p)))))/(M**2*p**3*(-4*a**2*(-1 + e**2)**2 + 
-        M**2*(3 + e**2 - p)**2*p)))*(a**4*(-1 + e**2)**4 + 
-        a**2*(-1 + e**2)**2*M**2*p*(-4 + 3*p + e**2*(4 + p)) - torch.sqrt(
-        a**2*(-1 + e**2)**4*M**2*p**3*(a**4*(-1 + e**2)**2 + 
-        M**4*(-4*e**2 + (-2 + p)**2)*p**2 + 
-        2*a**2*M**2*p*(-2 + p + e**2*(2 + p)))))/(a**3*(-1 + e**2)**4 - 
-        a*(-1 + e**2)**2*M**2*(-4*e**2 + (-2 + p)**2)*p)
+    eps = torch.tensor(1e-8, dtype=a.dtype, device=a.device)
+    a_safe = torch.where(torch.abs(a) < eps, eps, a)
+
+    inner = a_safe**2*(-1 + e**2)**4*M**2*p**3*(a_safe**4*(-1 + e**2)**2 +
+        M**4*(-4*e**2 + (-2 + p)**2)*p**2 +
+        2*a_safe**2*M**2*p*(-2 + p + e**2*(2 + p)))
+    inner = torch.clamp(inner, min=1e-12)
+    numerator = (M**4*p**3*(-2 - 2*e + p)*(-2 + 2*e + p)*(-3 - e**2 + p) -
+            a_safe**2*(-1 + e**2)**2*M**2*p**2*(-5 + e**2 + 3*p) -
+            2*torch.sqrt(inner))
+    denom = (M**2*p**3*(-4*a**2*(-1 + e**2)**2 + M**2*(3 + e**2 - p)**2*p))
+    prefactor = torch.sqrt(torch.clamp(numerator / denom, min=1e-12))
+    numerator2 = (a_safe**4*(-1 + e**2)**4 +
+        a_safe**2*(-1 + e**2)**2*M**2*p*(-4 + 3*p + e**2*(4 + p)) - torch.sqrt(inner))
+    denom2 = (a_safe**3*(-1 + e**2)**4 -
+        a_safe*(-1 + e**2)**2*M**2*(-4*e**2 + (-2 + p)**2)*p)
+    res = prefactor * (numerator2 / denom2)
     return res
 
 
