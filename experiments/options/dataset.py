@@ -83,11 +83,22 @@ class OptionsDataset(Dataset):
     using finite difference approximation.
     """
 
-    def __init__(self, n_samples: int = 1, Smax: float = 120.0, T: float = 100.0, nS: int = 100, nt: int = 100):
+    def __init__(
+        self,
+        n_samples: int = 1,
+        Smax: float = 120.0,
+        T: float = 100.0,
+        nS: int = 100,
+        nt: int = 100,
+        K: float = 120.0,
+        r: float = 0.03,
+        sigma: float = 1.2,
+        dtype: torch.dtype = torch.float32,
+    ):
 
         self.data = []
 
-        # mesh grid
+        # mesh grid (calendar time t)
         mesh = generate_mesh_grid(
             nS=nS,
             nt=nt,
@@ -95,31 +106,30 @@ class OptionsDataset(Dataset):
             T=T
         )
 
-        # PDE parameters
-        K: float = 120.0
-        r: float = 0.03
-        sigma: float = 1.2
-        
         for _ in range(n_samples):
 
             # boundaries
             # V0 = torch.sin(math.pi * mesh["x"])
             V_St = solve_black_scholes_equation(
                 K=K,
-                S=mesh["S"],
-                t=mesh["t"],
+                S=mesh["St"][:, 0],
+                t=mesh["St"][:, 1],
                 T=T,
                 r=r,
                 sigma=sigma
-            )
+            ).reshape(nS, nt).to(dtype)
+            tau = (T - mesh["t"]).to(dtype)
+            tau_mesh = (T - mesh["St"][:, 1]).to(dtype)
+            St_tau = torch.stack([mesh["St"][:, 0], tau_mesh], dim=1).to(dtype)
+
             item_information = mesh | {
+                "tau": tau,
+                "St_tau": St_tau,
                 "V_St": V_St,         # shape: (nt+1, nx)
                 # "V0": V0,
             }
-            for v in ["S", "St", "V_St"]:
-                item_information[v] = item_information[v].requires_grad_(True)
-            
-            item_information["S"] = item_information["S"].reshape(-1,1)
+            item_information["S"] = item_information["S"].reshape(-1, 1).to(dtype)
+            item_information["St"] = item_information["St"].to(dtype)
 
             self.data.append(item_information)
 
