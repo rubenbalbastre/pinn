@@ -47,3 +47,42 @@ def train_options_pinn(dataset, options_price_net, loss_function, optimizer, epo
 
     return losses
 
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join("..", "")))
+
+import torch
+from experiments.options.dataset import OptionsDataset
+from experiments.options.train import train_options_pinn
+from model import OptionPriceNetwork
+from loss import Loss
+
+
+# For PyTorch random
+torch.manual_seed(45)
+
+# Create Dataset
+Smax = 120.0
+T = 10.0
+K = 60.0
+r = 0.03
+sigma = 0.2
+dataset = OptionsDataset(n_samples=1, nS=20, nt=20, Smax=Smax, T=T)
+
+# Define PINNs
+option_net = OptionPriceNetwork(hidden_dim=32)
+
+# training
+option_net.train()
+
+lr = 1e-2
+optimizer = torch.optim.Adam(list(option_net.parameters()), lr=lr)
+loss = Loss(T=T, K=K, r=r, sigma=sigma)
+losses = train_options_pinn(
+    loss_function=loss,
+    optimizer=optimizer,
+    dataset=dataset,
+    options_price_net=option_net,
+    epochs=3000
+)
