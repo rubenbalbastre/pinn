@@ -3,8 +3,8 @@ import torch.nn as nn
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from dataset import OptionsDataset
-from loss import Loss
+from options.dataset import OptionsDataset
+from options.loss import Loss
 import numpy as np
 
 
