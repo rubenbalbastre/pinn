@@ -1,6 +1,6 @@
 # Physics-Informed Neural Networks (PINNs)
 
-This repo collects PINN experiments for inverse PDE problems. All problems are formulated and solved in inverse form.
+This repo collects PINN experiments for inverse PDE problems.
 
 ## Problem Types
 - All problems are solved as inverse problems.
@@ -8,12 +8,11 @@ This repo collects PINN experiments for inverse PDE problems. All problems are f
 - **BBH EMR** is solved in **both discrete and continuous** inverse forms.
 
 ## Experiments
-The main notebooks live under `experiments/`, organized by problem:
-- `experiments/toy_problem/`
-- `experiments/diffusion_equation/`
-- `experiments/options/`
-- `experiments/multi_physics/`
-- `experiments/binary_black_holes_emr_inverse_problem/` (BBH EMR)
+- `toy_problem/` 1D Poisson Equation
+- `bbh_emr/` Extreme Mass Ratio (EMR) Binary Black Holes (BBH)
+- `diffusion_equation/` 1D Diffusion Equation
+- `options/` Black-Scholes PDE
+- `multi_physics/` [pending]
 
 ## Setup
 Use Python 3.12.3 and install dependencies:

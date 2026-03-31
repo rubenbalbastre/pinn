@@ -2,10 +2,10 @@ import math
 import torch
 from torch.utils.data import Dataset
 
-from numerical_solvers import solve_ode_rk2
-from orbital_mechanics import compute_waveform, compute_orbit
-from schwarzschild_models import RelativisticOrbitModelSchwarzschildODE
-from kerr_models import RelativisticOrbitModelODE
+from binary_black_holes_emr_inverse_problem.numerical_solvers import solve_ode_rk2
+from binary_black_holes_emr_inverse_problem.orbital_mechanics import compute_waveform, compute_orbit
+from binary_black_holes_emr_inverse_problem.schwarzschild_models import RelativisticOrbitModelSchwarzschildODE
+from binary_black_holes_emr_inverse_problem.kerr_models import RelativisticOrbitModelODE
 
 
 def generate_mesh(tspan, dt, factor=1):
