@@ -33,11 +33,12 @@ def plot_sample(sample, u_xt_pred, xt_pred_mesh):
 
     fig.suptitle(f"{sample["u_type_txt"].capitalize()} (physical coefficient: {sample['kind']})")
 
-    plt.show()
+    return fig
     
 
 def plot_physical_property(x, property_true, property_pred):
 
+    fig = plt.figure()
     plt.plot(x, property_true, label="true", color='b')
     plt.xlabel("x")
     plt.ylabel("property")
@@ -46,4 +47,4 @@ def plot_physical_property(x, property_true, property_pred):
     plt.title("Physical Property Prediction")
     plt.grid()
 
-    plt.show()
+    return fig
