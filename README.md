@@ -12,7 +12,6 @@ This repo collects PINN experiments for inverse PDE problems.
 - `bbh_emr/` Extreme Mass Ratio (EMR) Binary Black Holes (BBH)
 - `diffusion_equation/` 1D Diffusion Equation
 - `options/` Black-Scholes PDE
-- `multi_physics/` [pending]
 
 ## Setup
 Use Python 3.12.3 and install dependencies:
