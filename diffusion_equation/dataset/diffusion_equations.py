@@ -3,8 +3,8 @@ import math
 import random
 from torch.utils.data import Dataset
 
-from src.data_generator.mesh_grid import generate_mesh_grid
-from src.data_generator.utils import encode_u_type, concat_encoder_input
+from dataset.mesh_grid import generate_mesh_grid
+from dataset.utils import encode_u_type, concat_encoder_input
 
 
 def solve_diffusion_equation(alpha_x, x, t, dt, dx, u0):
