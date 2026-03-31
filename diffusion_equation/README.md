@@ -1,6 +1,55 @@
-Let's solve an inverse PINN problem. The purpose of this notebook is to show that mathematical solutions can be discovered but they are not a physical solution. This can be seen in the results:
+# Diffusion Equation PINN Experiment
 
-- we succesfully recover u(x,t)
-- we do not recover alpha(x)
+This experiment trains a Physics-Informed Neural Network (PINN) for a 1D diffusion inverse problem:
 
-Essentially, what is hapenning is that the network u(x,t) learns everything alone so alpha(x) is not required to do anything (i.e: an horizontal line)
+- recover the field `u(x, t)`
+- recover the spatial coefficient `alpha(x)`
+
+In this baseline setup, the model typically fits `u(x, t)` well, while `alpha(x)` can collapse to an almost constant line (identifiability issue).
+
+## Current Structure
+
+```text
+diffusion_equation/
+├── README.md
+├── train.py
+├── model.py
+├── dataset/
+│   ├── diffusion_equations.py
+│   ├── mesh_grid.py
+│   └── utils.py
+├── loss_function/
+│   ├── diffusion_loss.py
+│   └── loss_function.py
+├── plots/
+│   ├── figures.py
+│   └── loss_function.py
+└── figures/
+    ├── sample_prediction.png
+    └── physical_property_prediction.png
+```
+
+## Run
+
+From the repository root:
+
+```bash
+python3 diffusion_equation/train.py
+```
+
+The script trains the PINN, displays the loss curve, and writes output figures into `diffusion_equation/figures/`.
+
+## Results
+
+### Field Prediction `u(x, t)`
+
+![Sample Prediction](figures/sample_prediction.png)
+
+### Physical Coefficient `alpha(x)`
+
+![Physical Property Prediction](figures/physical_property_prediction.png)
+
+## Notes
+
+- `u_net` learns from direct field supervision and can explain most behavior alone.
+- `alpha_net` is coupled mainly through PDE and regularization terms, so recovery is sensitive to loss weights, data diversity, and constraints.
