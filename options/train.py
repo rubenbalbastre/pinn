@@ -3,9 +3,10 @@ import torch.nn as nn
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from options.dataset import OptionsDataset
-from options.loss import Loss
 import numpy as np
+
+from dataset import OptionsDataset
+from loss import Loss
 
 
 # For PyTorch random
@@ -40,7 +41,7 @@ class OptionPriceNetwork(nn.Module):
             nn.Tanh(),
             nn.Linear(in_features=hidden_dim, out_features=hidden_dim),
             nn.Tanh(),
-            nn.Linear(in_features=hidden_dim,out_features=1),
+            nn.Linear(in_features=hidden_dim, out_features=1),
             nn.Softplus()
         )
 
@@ -52,15 +53,15 @@ model = OptionPriceNetwork(hidden_dim=64).to(device)
 # training
 model.train()
 
-lr = 1e-3
+lr = 3e-3
 optimizer = torch.optim.Adam(list(model.parameters()), lr=lr)
-criterion = Loss(T=T, K=K, r=r, sigma=sigma, data_coeff=0.01)
+criterion = Loss(T=T, K=K, r=r, sigma=sigma, Smax=Smax, data_coeff=0.01, pde_coeff=10.0)
 
 losses = []
 loss_data_hist = []
 loss_pde_hist = []
 loss_bc_hist = []
-num_epochs = 5000
+num_epochs = 4000
 for epoch in tqdm(range(num_epochs)):
     epoch_loss = 0.0
     epoch_data = 0.0
@@ -126,7 +127,8 @@ with torch.no_grad():
     S = data_batch["S"].cpu().numpy().reshape(-1)
     tau = data_batch["tau"].cpu().numpy().reshape(-1)
 
-fig_dir = "experiments/options/figures/"
+
+fig_dir = "options/figures/"
 os.makedirs(fig_dir, exist_ok=True)
 
 # Plot option price contours (2D)
@@ -144,11 +146,10 @@ axes[0].set_title("Exact Contours")
 axes[0].set_ylabel("S")
 fig_price.colorbar(cs1, ax=axes[0], fraction=0.046, pad=0.04)
 
-cs2 = axes[1].contourf(T_grid, S_grid, V_pred_plot, levels=levels, cmap="plasma")
 axes[1].contour(T_grid, S_grid, V_pred_plot, levels=levels, colors="k", linewidths=0.3, alpha=0.5)
 axes[1].set_title("PINN Prediction Contours")
 axes[1].set_ylabel("S")
-fig_price.colorbar(cs2, ax=axes[1], fraction=0.046, pad=0.04)
+fig_price.colorbar(cs1, ax=axes[1], fraction=0.046, pad=0.04)
 
 residuals = V_pred_plot - V_true_plot
 cs3 = axes[2].contourf(T_grid, S_grid, residuals, levels=levels, cmap="coolwarm")
